@@ -53,14 +53,14 @@ AFirstProjectPawn::AFirstProjectPawn()
 	Camera->SetRelativeRotation(FRotator(6.f, 0.f, 0.f));
 
 	// Set handling parameters
-	Acceleration = 1600.f;
+	Acceleration = 2000.f;
 	CurrentAcceleration = 0.f;
-	MinAcceleration = -1500.f;
+	MinAcceleration = -2500.f;
 	MaxAcceleration = 3000.f;
 	TurnSpeed = 50.f;
 	MaxSpeed = 20000.f;
-	MinSpeed = 1000.f;
-	CurrentForwardSpeed = 1000.f;
+	MinSpeed = 5000.f;
+	CurrentForwardSpeed = 5000.f;
 	YawSpeed = 10.f;
 	CurrentHealth = 100.f;
 	CurrentCameraRight = 0.f;
@@ -135,8 +135,8 @@ void AFirstProjectPawn::Tick(float DeltaSeconds)
 	AddActorLocalRotation(DeltaRotation);
 
 	
-
-	float turbineRpm = ((CurrentAcceleration - MinAcceleration) / (MaxAcceleration - MinAcceleration)) * 1.25f + 0.75f;
+	//Turbine noise pitch is determined by a combination of the relative speed and acceleration with acceleration having preference
+	float turbineRpm = (((CurrentAcceleration - MinAcceleration) / (MaxAcceleration - MinAcceleration)) * 0.75f + 0.25f * ((CurrentForwardSpeed - MinSpeed) / (MaxSpeed - MinSpeed))) * 1.25f + 0.75f;
 	turbineAudioComponent->SetPitchMultiplier(turbineRpm);
 
 	SpringArm->SetRelativeRotation(FRotator(CurrentCameraUp, CurrentCameraRight, 0.f));
