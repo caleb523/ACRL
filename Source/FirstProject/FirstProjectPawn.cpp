@@ -11,6 +11,7 @@
 #include "Engine/StaticMesh.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
 
 AFirstProjectPawn::AFirstProjectPawn()
 {
@@ -71,8 +72,49 @@ AFirstProjectPawn::AFirstProjectPawn()
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> FireAudio(TEXT("/Game/Effects/P226-9mm-Close.P226-9mm-Close"));
 	FireSound = FireAudio.Object;
+
+	// Load our Sound Cue for the turbine sound we created in the editor... note your path may be different depending
+	// on where you store the asset on disk.
+	static ConstructorHelpers::FObjectFinder<USoundCue> turbineCue(TEXT("'/Game/Audio/Fighter_Turbine_Steady_02_Cue.Fighter_Turbine_Steady_02_Cue'"));
+
+	// Store a reference to the Cue asset - we'll need it later.
+	turbineAudioCue = turbineCue.Object;
+	// Create an audio component, the audio component wraps the Cue, and allows us to ineract with
+	// it, and its parameters from code.
+	turbineAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("TurbineAudioComp"));
+	// I don't want the sound playing the moment it's created.
+	turbineAudioComponent->bAutoActivate = false; // don't play the sound immediately.
+	// I want the sound to follow the pawn around, so I attach it to the Pawns root.
+	//turbineAudioComponent->AttachParent = RootComponent;
+	// I want the sound to come from slighty in front of the pawn.
+	turbineAudioComponent->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
 }
 
+void AFirstProjectPawn::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	if (turbineAudioCue->IsValidLowLevelFast()) {
+		turbineAudioComponent->SetSound(turbineAudioCue);
+	}
+}
+
+void AFirstProjectPawn::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Note because the Cue Asset is set to loop the sound,
+	// once we start playing the sound, it will play 
+	// continiously...
+
+	// You can fade the sound in... 
+	float startTime = 9.f;
+	float volume = 1.0f;
+	float fadeTime = 1.0f;
+	turbineAudioComponent->FadeIn(fadeTime, volume, startTime);
+
+	// Or you can start playing the sound immediately.
+	//turbineAudioComponent->Play();
+}
 void AFirstProjectPawn::Tick(float DeltaSeconds)
 {
 	const FVector LocalMove = FVector(CurrentForwardSpeed * DeltaSeconds, 0.f, 0.f);
@@ -91,6 +133,10 @@ void AFirstProjectPawn::Tick(float DeltaSeconds)
 
 	// Call any parent class Tick implementation
 	Super::Tick(DeltaSeconds);
+
+	float turbineRpm = ((CurrentForwardSpeed - MinSpeed) / (MaxSpeed - MinSpeed)) * 1.25f + 0.75f;
+	//turbineAudioComponent->SetFloatParameter(FName("Pitch"), turbineRpm);
+	turbineAudioComponent->SetPitchMultiplier(turbineRpm);
 
 	SpringArm->SetRelativeRotation(FRotator(CurrentCameraUp, CurrentCameraRight, 0.f));
 }

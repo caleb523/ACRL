@@ -3,7 +3,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Sound/SoundCue.h"
 #include "FirstProjectPawn.generated.h"
+
 
 UCLASS(Config=Game)
 class AFirstProjectPawn : public APawn
@@ -25,6 +27,8 @@ public:
 	AFirstProjectPawn();
 
 	// Begin AActor overrides
+	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	// End AActor overrides
@@ -82,6 +86,15 @@ protected:
 	void CameraRightInput(float Val);
 
 	void CameraUpInput(float Val);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Audio")
+	USoundCue* turbineAudioCue;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Audio")
+	USoundCue* turbineStartupCue;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Audio")
+	UAudioComponent* turbineAudioComponent;
 
 private:
 
