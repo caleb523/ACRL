@@ -63,6 +63,8 @@ public:
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 	float CurrentForwardSpeed;
 
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+	float CurrentAcceleration;
 
 protected:
 
@@ -116,6 +118,14 @@ private:
 	/** Min forward speed */
 	UPROPERTY(Category = Plane, EditAnywhere)
 	float MinSpeed;
+
+	/** Max forward speed */
+	UPROPERTY(Category = Plane, EditAnywhere)
+	float MaxAcceleration;
+
+	/** Min forward speed */
+	UPROPERTY(Category = Plane, EditAnywhere)
+	float MinAcceleration;
 
 	/** Current yaw speed */
 	float CurrentYawSpeed;

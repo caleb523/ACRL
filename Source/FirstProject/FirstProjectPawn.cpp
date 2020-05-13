@@ -53,9 +53,12 @@ AFirstProjectPawn::AFirstProjectPawn()
 	Camera->SetRelativeRotation(FRotator(6.f, 0.f, 0.f));
 
 	// Set handling parameters
-	Acceleration = 500.f;
+	Acceleration = 1600.f;
+	CurrentAcceleration = 0.f;
+	MinAcceleration = -1500.f;
+	MaxAcceleration = 3000.f;
 	TurnSpeed = 50.f;
-	MaxSpeed = 10000.f;
+	MaxSpeed = 20000.f;
 	MinSpeed = 1000.f;
 	CurrentForwardSpeed = 1000.f;
 	YawSpeed = 10.f;
@@ -87,7 +90,7 @@ AFirstProjectPawn::AFirstProjectPawn()
 	// I want the sound to follow the pawn around, so I attach it to the Pawns root.
 	//turbineAudioComponent->AttachParent = RootComponent;
 	// I want the sound to come from slighty in front of the pawn.
-	turbineAudioComponent->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
+	turbineAudioComponent->SetRelativeLocation(FVector(-80.0f, 0.0f, 0.0f));
 }
 
 void AFirstProjectPawn::PostInitializeComponents()
@@ -111,12 +114,12 @@ void AFirstProjectPawn::BeginPlay()
 	float volume = 1.0f;
 	float fadeTime = 1.0f;
 	turbineAudioComponent->FadeIn(fadeTime, volume, startTime);
-
-	// Or you can start playing the sound immediately.
-	//turbineAudioComponent->Play();
 }
 void AFirstProjectPawn::Tick(float DeltaSeconds)
 {
+	float NewForwardSpeed = CurrentForwardSpeed + (GetWorld()->GetDeltaSeconds() * CurrentAcceleration);
+	// Clamp between MinSpeed and MaxSpeed
+	CurrentForwardSpeed = FMath::Clamp(NewForwardSpeed, MinSpeed, MaxSpeed);
 	const FVector LocalMove = FVector(CurrentForwardSpeed * DeltaSeconds, 0.f, 0.f);
 
 	// Move plan forwards (with sweep so we stop when we collide with things)
@@ -131,14 +134,15 @@ void AFirstProjectPawn::Tick(float DeltaSeconds)
 	// Rotate plane
 	AddActorLocalRotation(DeltaRotation);
 
-	// Call any parent class Tick implementation
-	Super::Tick(DeltaSeconds);
+	
 
-	float turbineRpm = ((CurrentForwardSpeed - MinSpeed) / (MaxSpeed - MinSpeed)) * 1.25f + 0.75f;
-	//turbineAudioComponent->SetFloatParameter(FName("Pitch"), turbineRpm);
+	float turbineRpm = ((CurrentAcceleration - MinAcceleration) / (MaxAcceleration - MinAcceleration)) * 1.25f + 0.75f;
 	turbineAudioComponent->SetPitchMultiplier(turbineRpm);
 
 	SpringArm->SetRelativeRotation(FRotator(CurrentCameraUp, CurrentCameraRight, 0.f));
+
+	// Call any parent class Tick implementation
+	Super::Tick(DeltaSeconds);
 }
 
 void AFirstProjectPawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
@@ -172,11 +176,11 @@ void AFirstProjectPawn::ThrustInput(float Val)
 	// Is there any input?
 	bool bHasInput = !FMath::IsNearlyEqual(Val, 0.f);
 	// If input is not held down, reduce speed
-	float CurrentAcc = bHasInput ? (Val * Acceleration) : (-0.5f * Acceleration);
+	float CurrentAcc = bHasInput ? (Val * Acceleration) : (-0.4f * CurrentAcceleration);
 	// Calculate new speed
-	float NewForwardSpeed = CurrentForwardSpeed + (GetWorld()->GetDeltaSeconds() * CurrentAcc);
+	float NewAccelerationSpeed = CurrentAcceleration + (GetWorld()->GetDeltaSeconds() * CurrentAcc);
 	// Clamp between MinSpeed and MaxSpeed
-	CurrentForwardSpeed = FMath::Clamp(NewForwardSpeed, MinSpeed, MaxSpeed);
+	CurrentAcceleration = FMath::Clamp(NewAccelerationSpeed, MinAcceleration, MaxAcceleration);
 }
 
 void AFirstProjectPawn::MoveUpInput(float Val)
@@ -253,7 +257,7 @@ void AFirstProjectPawn::MGunInput(float Val)
 			
 			if (FireSound != nullptr)
 			{
-				UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+				//UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
 			}
 			MGunAmmo--;
 
