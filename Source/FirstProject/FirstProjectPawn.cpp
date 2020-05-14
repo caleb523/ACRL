@@ -5,10 +5,12 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/SkeletalMesh.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
@@ -18,39 +20,40 @@ AFirstProjectPawn::AFirstProjectPawn()
 	// Structure to hold one-time initialization
 	struct FConstructorStatics
 	{
-		ConstructorHelpers::FObjectFinderOptional<UStaticMesh> PlaneMesh;
+		ConstructorHelpers::FObjectFinderOptional<USkeletalMesh> PlaneMesh;
 		FConstructorStatics()
 			//: PlaneMesh(TEXT("/Game/Flying/Meshes/UFO.UFO"))
-			: PlaneMesh(TEXT("/Game/new-f22-raptor/source/F22_Raptor.F22_Raptor"))
+			: PlaneMesh(TEXT("/Game/Models/F22_Rigged/F22_Rigged_Scaled.F22_Rigged_Scaled"))
 		{
 		}
 	};
 	static FConstructorStatics ConstructorStatics;
 
 	// Create static mesh component
-	PlaneMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaneMesh0"));
-	PlaneMesh->SetStaticMesh(ConstructorStatics.PlaneMesh.Get());	// Set static mesh
+	PlaneMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PlaneMesh0"));
+	PlaneMesh->SetSkeletalMesh(ConstructorStatics.PlaneMesh.Get());	// Set static mesh
+	PlaneMesh->SetCollisionProfileName("Pawn");
 	RootComponent = PlaneMesh;
 
 	// Create a spring arm component
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm0"));
 	SpringArm->SetupAttachment(RootComponent);	// Attach SpringArm to RootComponent
-	SpringArm->TargetArmLength = 160.0f; // The camera follows at this distance behind the character	
-	SpringArm->SocketOffset = FVector(-140.f,0.f,80.f);
+	SpringArm->TargetArmLength = 1800.0f; // The camera follows at this distance behind the character	
+	SpringArm->SocketOffset = FVector(0.f,0.f,0.f);
 	SpringArm->bEnableCameraLag = true;	// Do not allow camera to lag
 	SpringArm->CameraLagSpeed = 40.f;
 	SpringArm->CameraLagMaxDistance = 50.f;
 	SpringArm->bEnableCameraRotationLag = true;
-	SpringArm->CameraRotationLagSpeed = 7.5f;
-	SpringArm->SetRelativeLocation(FVector(20.f, 0.f, 0.f));
+	SpringArm->CameraRotationLagSpeed = 15.f;
+	SpringArm->SetRelativeLocation(FVector(20.f, 0.f, 350.f));
 
 	// Create camera component 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera0"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);	// Attach the camera
 	Camera->bUsePawnControlRotation = false; // Don't rotate camera with controller
-	Camera->FieldOfView = 100.f;
+	Camera->FieldOfView = 90.f;
 	Camera->SetRelativeLocation(FVector(40.f, 0.f, -45.f));
-	Camera->SetRelativeRotation(FRotator(6.f, 0.f, 0.f));
+	Camera->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
 
 	// Set handling parameters
 	Acceleration = 2000.f;
@@ -58,9 +61,9 @@ AFirstProjectPawn::AFirstProjectPawn()
 	MinAcceleration = -2500.f;
 	MaxAcceleration = 3000.f;
 	TurnSpeed = 50.f;
-	MaxSpeed = 20000.f;
-	MinSpeed = 5000.f;
-	CurrentForwardSpeed = 5000.f;
+	MaxSpeed = 67000.f;
+	MinSpeed = 7200.f;
+	CurrentForwardSpeed = 10000.f;
 	YawSpeed = 10.f;
 	CurrentHealth = 100.f;
 	CurrentCameraRight = 0.f;
@@ -68,7 +71,7 @@ AFirstProjectPawn::AFirstProjectPawn()
 
 	// Weapon
 	GunOffset = FVector(600.f, 0.f, -20.f);
-	FireRate = 0.0017f;
+	FireRate = 0.01f;
 	MGunCone = 0.5;
 	bCanFire = true;
 	MGunAmmo = 480;
