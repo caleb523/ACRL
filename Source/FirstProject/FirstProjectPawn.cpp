@@ -22,7 +22,6 @@ AFirstProjectPawn::AFirstProjectPawn()
 	{
 		ConstructorHelpers::FObjectFinderOptional<USkeletalMesh> PlaneMesh;
 		FConstructorStatics()
-			//: PlaneMesh(TEXT("/Game/Flying/Meshes/UFO.UFO"))
 			: PlaneMesh(TEXT("/Game/Models/F22_Rigged/F22_Rigged_Scaled.F22_Rigged_Scaled"))
 		{
 		}
@@ -32,7 +31,7 @@ AFirstProjectPawn::AFirstProjectPawn()
 	// Create static mesh component
 	PlaneMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PlaneMesh0"));
 	PlaneMesh->SetSkeletalMesh(ConstructorStatics.PlaneMesh.Get());	// Set static mesh
-	PlaneMesh->SetCollisionProfileName("Pawn");
+	//PlaneMesh->SetCollisionProfileName("Pawn");
 	RootComponent = PlaneMesh;
 
 	// Create a spring arm component
