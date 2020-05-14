@@ -37,21 +37,21 @@ AFirstProjectPawn::AFirstProjectPawn()
 	// Create a spring arm component
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm0"));
 	SpringArm->SetupAttachment(RootComponent);	// Attach SpringArm to RootComponent
-	SpringArm->TargetArmLength = 1800.0f; // The camera follows at this distance behind the character	
+	SpringArm->TargetArmLength = 1900.0f; // The camera follows at this distance behind the character	
 	SpringArm->SocketOffset = FVector(0.f,0.f,0.f);
 	SpringArm->bEnableCameraLag = true;	// Do not allow camera to lag
 	SpringArm->CameraLagSpeed = 40.f;
 	SpringArm->CameraLagMaxDistance = 50.f;
 	SpringArm->bEnableCameraRotationLag = true;
 	SpringArm->CameraRotationLagSpeed = 15.f;
-	SpringArm->SetRelativeLocation(FVector(20.f, 0.f, 350.f));
+	SpringArm->SetRelativeLocation(FVector(0.f, 0.f, 305.f));
 
 	// Create camera component 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera0"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);	// Attach the camera
 	Camera->bUsePawnControlRotation = false; // Don't rotate camera with controller
 	Camera->FieldOfView = 90.f;
-	Camera->SetRelativeLocation(FVector(40.f, 0.f, -45.f));
+	Camera->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
 	Camera->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
 
 	// Set handling parameters
@@ -71,9 +71,9 @@ AFirstProjectPawn::AFirstProjectPawn()
 	// Weapon
 	GunOffset = FVector(600.f, 0.f, -20.f);
 	FireRate = 0.01f;
-	MGunCone = 0.5;
+	MGunCone = 0.f;
 	bCanFire = true;
-	MGunAmmo = 480;
+	MGunAmmo = 48000;
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> FireAudio(TEXT("/Game/Effects/P226-9mm-Close.P226-9mm-Close"));
 	FireSound = FireAudio.Object;
