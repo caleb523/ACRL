@@ -71,7 +71,7 @@ AFirstProjectPawn::AFirstProjectPawn()
 	// Weapon
 	GunOffset = FVector(600.f, 0.f, -20.f);
 	FireRate = 0.01f;
-	MGunCone = 0.f;
+	MGunCone = 0.5f;
 	bCanFire = true;
 	MGunAmmo = 48000;
 
@@ -249,7 +249,9 @@ void AFirstProjectPawn::MGunInput(float Val)
 			if (World != NULL)
 			{
 				// spawn the projectile
-				World->SpawnActor<AMGunBullet>(SpawnLocation, FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone));
+				AMGunBullet* bullet = World->SpawnActorDeferred<AMGunBullet>(AMGunBullet::StaticClass(), FTransform(FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone), SpawnLocation), GetOwner(), GetOwner()->GetInstigator());
+				bullet->SetVelocity(CurrentForwardSpeed);
+				UGameplayStatics::FinishSpawningActor(bullet, FTransform(FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone), SpawnLocation));
 			}
 
 			bCanFire = false;
