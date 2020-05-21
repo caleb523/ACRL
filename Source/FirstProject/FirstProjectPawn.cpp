@@ -238,7 +238,7 @@ void AFirstProjectPawn::MGunInput(float Val)
 	// If it's ok to fire again
 	if (bCanFire == true && MGunAmmo > 0)
 	{
-		// If we are pressing fire stick in a direction
+		// If the gun button is being pressed
 		if (Val > 0.0f)
 		{
 			const FRotator FireRotation = GetActorRotation();

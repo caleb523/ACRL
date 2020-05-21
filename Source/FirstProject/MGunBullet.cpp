@@ -30,7 +30,7 @@ AMGunBullet::AMGunBullet()
 	ProjectileMovement->InitialSpeed = 103000.f;
 	ProjectileMovement->MaxSpeed = 103000.f;
 	ProjectileMovement->bRotationFollowsVelocity = true;
-	ProjectileMovement->bShouldBounce = true;
+	ProjectileMovement->bShouldBounce = false;
 	ProjectileMovement->ProjectileGravityScale = 0.f; // No gravity
 
 	// Die after 3 seconds by default
