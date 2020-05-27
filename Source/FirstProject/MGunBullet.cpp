@@ -16,7 +16,8 @@ AMGunBullet::AMGunBullet()
 
 	// Create mesh component for the projectile sphere
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh0"));
-	ProjectileMesh->SetWorldScale3D(FVector(1.f, 0.2f, 0.2f));
+	ProjectileMesh->SetWorldScale3D(FVector(2.f, 0.3f, 0.3f));
+	ProjectileMesh->SetCollisionProfileName("IgnoreOnlyPawn");
 	ProjectileMesh->CastShadow = false;
 	ProjectileMesh->SetStaticMesh(ProjectileMeshAsset.Object);
 	ProjectileMesh->SetupAttachment(RootComponent);
@@ -31,7 +32,7 @@ AMGunBullet::AMGunBullet()
 	ProjectileMovement->MaxSpeed = 103000.f;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = false;
-	ProjectileMovement->ProjectileGravityScale = 0.f; // No gravity
+	ProjectileMovement->ProjectileGravityScale = 1.f; // No gravity
 
 	// Die after 3 seconds by default
 	InitialLifeSpan = 5.0f;
