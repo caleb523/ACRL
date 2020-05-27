@@ -31,7 +31,7 @@ AFirstProjectPawn::AFirstProjectPawn()
 	// Create static mesh component
 	PlaneMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PlaneMesh0"));
 	PlaneMesh->SetSkeletalMesh(ConstructorStatics.PlaneMesh.Get());	// Set static mesh
-	//PlaneMesh->SetCollisionProfileName("Pawn");
+	PlaneMesh->SetCollisionProfileName("Pawn");
 	RootComponent = PlaneMesh;
 
 	// Create a spring arm component
@@ -55,25 +55,26 @@ AFirstProjectPawn::AFirstProjectPawn()
 	Camera->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
 
 	// Set handling parameters
-	Acceleration = 2000.f;
+	Acceleration = 15000.f;
 	CurrentAcceleration = 0.f;
-	MinAcceleration = -2500.f;
-	MaxAcceleration = 3000.f;
+	MinAcceleration = -7500.f;
+	MaxAcceleration = 10000.f;
 	TurnSpeed = 50.f;
-	MaxSpeed = 67000.f;
+	MaxSpeed = 67056.f;
 	MinSpeed = 7200.f;
 	CurrentForwardSpeed = 10000.f;
 	YawSpeed = 10.f;
 	CurrentHealth = 100.f;
 	CurrentCameraRight = 0.f;
 	CurrentCameraUp = 0.f;
+	Score = 0;
 
 	// Weapon
-	GunOffset = FVector(600.f, 0.f, -20.f);
+	GunOffset = FVector(70.f, 160.f, 45.f);
 	FireRate = 0.01f;
-	MGunCone = 0.f;
+	MGunCone = 0.2f;
 	bCanFire = true;
-	MGunAmmo = 48000;
+	MGunAmmo = 4800;
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> FireAudio(TEXT("/Game/Effects/P226-9mm-Close.P226-9mm-Close"));
 	FireSound = FireAudio.Object;
@@ -249,7 +250,9 @@ void AFirstProjectPawn::MGunInput(float Val)
 			if (World != NULL)
 			{
 				// spawn the projectile
-				World->SpawnActor<AMGunBullet>(SpawnLocation, FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone));
+				AMGunBullet* bullet = World->SpawnActorDeferred<AMGunBullet>(AMGunBullet::StaticClass(), FTransform(FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone), SpawnLocation), GetOwner(), GetOwner()->GetInstigator());
+				bullet->SetVelocity(CurrentForwardSpeed);
+				UGameplayStatics::FinishSpawningActor(bullet, FTransform(FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone), SpawnLocation));
 			}
 
 			bCanFire = false;
