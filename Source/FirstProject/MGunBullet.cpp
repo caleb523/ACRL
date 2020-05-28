@@ -16,7 +16,7 @@ AMGunBullet::AMGunBullet()
 
 	// Create mesh component for the projectile sphere
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh0"));
-	ProjectileMesh->SetWorldScale3D(FVector(2.f, 0.3f, 0.3f));
+	ProjectileMesh->SetWorldScale3D(FVector(1.f, 0.3f, 0.3f));
 	ProjectileMesh->SetCollisionProfileName("IgnoreOnlyPawn");
 	ProjectileMesh->CastShadow = false;
 	ProjectileMesh->SetStaticMesh(ProjectileMeshAsset.Object);
@@ -30,11 +30,11 @@ AMGunBullet::AMGunBullet()
 	ProjectileMovement->UpdatedComponent = ProjectileMesh;
 	ProjectileMovement->InitialSpeed = 103000.f;
 	ProjectileMovement->MaxSpeed = 103000.f;
-	ProjectileMovement->bRotationFollowsVelocity = true;
+	ProjectileMovement->bRotationFollowsVelocity = false;
 	ProjectileMovement->bShouldBounce = false;
-	ProjectileMovement->ProjectileGravityScale = 1.f; // No gravity
+	ProjectileMovement->ProjectileGravityScale = 0.f; // Normal gravity
 
-	// Die after 3 seconds by default
+	// Die after 5 seconds if no collision
 	InitialLifeSpan = 5.0f;
 
 }
@@ -47,12 +47,6 @@ void AMGunBullet::SetVelocity(double vel)
 
 void AMGunBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	// Only add impulse and destroy projectile if we hit a physics
-	if ((OtherActor != NULL) && (OtherActor != this) && OtherComp->IsSimulatingPhysics())
-	{
-		//OtherComp->AddImpulseAtLocation(GetVelocity() * 20.0f, GetActorLocation());
-
-	}
 
 	//Destroy();
 }

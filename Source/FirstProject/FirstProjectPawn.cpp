@@ -75,6 +75,7 @@ AFirstProjectPawn::AFirstProjectPawn()
 	MGunCone = 0.2f;
 	bCanFire = true;
 	MGunAmmo = 4800;
+	firing = false;
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> FireAudio(TEXT("/Game/Effects/P226-9mm-Close.P226-9mm-Close"));
 	FireSound = FireAudio.Object;
@@ -82,18 +83,22 @@ AFirstProjectPawn::AFirstProjectPawn()
 	// Load our Sound Cue for the turbine sound we created in the editor... note your path may be different depending
 	// on where you store the asset on disk.
 	static ConstructorHelpers::FObjectFinder<USoundCue> turbineCue(TEXT("'/Game/Audio/Fighter_Turbine_Steady_02_Cue.Fighter_Turbine_Steady_02_Cue'"));
+	static ConstructorHelpers::FObjectFinder<USoundCue> fireCue(TEXT("'/Game/Audio/Effects/WPN_GUN_BRRT_Cue.WPN_GUN_BRRT_Cue'"));
 
 	// Store a reference to the Cue asset - we'll need it later.
 	turbineAudioCue = turbineCue.Object;
+	fireAudioCue = fireCue.Object;
 	// Create an audio component, the audio component wraps the Cue, and allows us to ineract with
 	// it, and its parameters from code.
 	turbineAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("TurbineAudioComp"));
+	fireAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("fireAudioComp"));
 	// I don't want the sound playing the moment it's created.
+	fireAudioComponent->bAutoActivate = false;
 	turbineAudioComponent->bAutoActivate = false; // don't play the sound immediately.
 	// I want the sound to follow the pawn around, so I attach it to the Pawns root.
 	//turbineAudioComponent->AttachParent = RootComponent;
-	// I want the sound to come from slighty in front of the pawn.
 	turbineAudioComponent->SetRelativeLocation(FVector(-80.0f, 0.0f, 0.0f));
+	fireAudioComponent->SetRelativeLocation(GunOffset);
 }
 
 void AFirstProjectPawn::PostInitializeComponents()
@@ -101,6 +106,9 @@ void AFirstProjectPawn::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	if (turbineAudioCue->IsValidLowLevelFast()) {
 		turbineAudioComponent->SetSound(turbineAudioCue);
+	}
+	if (fireAudioCue->IsValidLowLevelFast()) {
+		fireAudioComponent->SetSound(fireAudioCue);
 	}
 }
 
@@ -169,7 +177,8 @@ void AFirstProjectPawn::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAxis("MoveUp", this, &AFirstProjectPawn::MoveUpInput);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AFirstProjectPawn::MoveRightInput);
 	PlayerInputComponent->BindAxis("Yaw", this, &AFirstProjectPawn::YawRightInput);
-	PlayerInputComponent->BindAxis("MGun", this, &AFirstProjectPawn::MGunInput);
+	PlayerInputComponent->BindAction("MGun", IE_Repeat, this, &AFirstProjectPawn::MGunInput);
+	PlayerInputComponent->BindAction("MGun", IE_Released, this, &AFirstProjectPawn::MGunOutput);
 	PlayerInputComponent->BindAxis("CameraRight", this, &AFirstProjectPawn::CameraRightInput);
 	PlayerInputComponent->BindAxis("CameraUp", this, &AFirstProjectPawn::CameraUpInput);
 }
@@ -234,19 +243,20 @@ void AFirstProjectPawn::CameraUpInput(float Val)
 	CurrentCameraUp = -90.f * Val;
 }
 
-void AFirstProjectPawn::MGunInput(float Val)
+void AFirstProjectPawn::MGunInput()
 {
+	UWorld* const World = GetWorld();
 	// If it's ok to fire again
-	if (bCanFire == true && MGunAmmo > 0)
+	if(MGunAmmo > 0)
 	{
-		// If the gun button is being pressed
-		if (Val > 0.0f)
+		if (bCanFire == true)
 		{
+			MGunAmmo--;
+			bCanFire = false;
 			const FRotator FireRotation = GetActorRotation();
 			// Spawn projectile at an offset from this pawn
 			const FVector SpawnLocation = GetActorLocation() + FireRotation.RotateVector(GunOffset);
-
-			UWorld* const World = GetWorld();
+			
 			if (World != NULL)
 			{
 				// spawn the projectile
@@ -254,21 +264,16 @@ void AFirstProjectPawn::MGunInput(float Val)
 				bullet->SetVelocity(CurrentForwardSpeed);
 				UGameplayStatics::FinishSpawningActor(bullet, FTransform(FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone), SpawnLocation));
 			}
-
-			bCanFire = false;
-			World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &AFirstProjectPawn::ShotTimerExpired, FireRate);
-
-			// try and play the sound if specified
 			
-			if (FireSound != nullptr)
-			{
-				//UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-			}
-			MGunAmmo--;
-
-			bCanFire = false;
+			fireAudioComponent->Activate();			
 		}
 	}
+	World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &AFirstProjectPawn::ShotTimerExpired, FireRate);
+}
+
+void AFirstProjectPawn::MGunOutput()
+{
+	fireAudioComponent->Deactivate();
 }
 
 void AFirstProjectPawn::ShotTimerExpired()
