@@ -86,11 +86,19 @@ protected:
 
 	void YawRightInput(float Val);
 
-	void MGunInput(float Val);
+	void MGunInput();
+
+	void MGunOutput();
 
 	void CameraRightInput(float Val);
 
 	void CameraUpInput(float Val);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Audio")
+	USoundCue* fireAudioCue;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Audio")
+	UAudioComponent* fireAudioComponent;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Audio")
 	USoundCue* turbineAudioCue;
@@ -142,6 +150,8 @@ private:
 	float CurrentCameraRight;
 
 	float CurrentCameraUp;
+
+	bool firing;
 
 	/* Flag to control firing  */
 	uint32 bCanFire : 1;
