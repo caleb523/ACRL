@@ -28,6 +28,8 @@ AFirstProjectPawn::AFirstProjectPawn()
 	};
 	static FConstructorStatics ConstructorStatics;
 
+	
+
 	// Create static mesh component
 	PlaneMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PlaneMesh0"));
 	PlaneMesh->SetSkeletalMesh(ConstructorStatics.PlaneMesh.Get());	// Set static mesh
@@ -71,23 +73,22 @@ AFirstProjectPawn::AFirstProjectPawn()
 
 	// Weapon
 	GunOffset = FVector(70.f, 160.f, 45.f);
-	FireRate = 0.01f;
+	FireRate = 0.004f;
 	MGunCone = 0.2f;
 	bCanFire = true;
-	MGunAmmo = 4800;
+	MGunAmmo = 480;
 	firing = false;
-
-	static ConstructorHelpers::FObjectFinder<USoundBase> FireAudio(TEXT("/Game/Effects/P226-9mm-Close.P226-9mm-Close"));
-	FireSound = FireAudio.Object;
 
 	// Load our Sound Cue for the turbine sound we created in the editor... note your path may be different depending
 	// on where you store the asset on disk.
 	static ConstructorHelpers::FObjectFinder<USoundCue> turbineCue(TEXT("'/Game/Audio/Fighter_Turbine_Steady_02_Cue.Fighter_Turbine_Steady_02_Cue'"));
 	static ConstructorHelpers::FObjectFinder<USoundCue> fireCue(TEXT("'/Game/Audio/Effects/WPN_GUN_BRRT_Cue.WPN_GUN_BRRT_Cue'"));
+	static ConstructorHelpers::FObjectFinder<USoundCue> ammoZeroCue(TEXT("'/Game/Audio/Effects/HUD_VOICE_AMMUNITION_ZERO_Cue.HUD_VOICE_AMMUNITION_ZERO_Cue'"));
 
 	// Store a reference to the Cue asset - we'll need it later.
 	turbineAudioCue = turbineCue.Object;
 	fireAudioCue = fireCue.Object;
+	ammoZeroAudioCue = ammoZeroCue.Object;
 	// Create an audio component, the audio component wraps the Cue, and allows us to ineract with
 	// it, and its parameters from code.
 	turbineAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("TurbineAudioComp"));
@@ -152,6 +153,21 @@ void AFirstProjectPawn::Tick(float DeltaSeconds)
 
 	SpringArm->SetRelativeRotation(FRotator(CurrentCameraUp, CurrentCameraRight, 0.f));
 
+	if (firing)
+	{
+		if (bCanFire == true)
+		{
+			if (MGunAmmo > 0)
+			{
+				MGunFire();
+			}
+			else
+			{
+				fireAudioComponent->Deactivate();
+				firing = false;
+			}
+		}
+	}
 	// Call any parent class Tick implementation
 	Super::Tick(DeltaSeconds);
 }
@@ -177,7 +193,7 @@ void AFirstProjectPawn::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAxis("MoveUp", this, &AFirstProjectPawn::MoveUpInput);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AFirstProjectPawn::MoveRightInput);
 	PlayerInputComponent->BindAxis("Yaw", this, &AFirstProjectPawn::YawRightInput);
-	PlayerInputComponent->BindAction("MGun", IE_Repeat, this, &AFirstProjectPawn::MGunInput);
+	PlayerInputComponent->BindAction("MGun", IE_Pressed, this, &AFirstProjectPawn::MGunInput);
 	PlayerInputComponent->BindAction("MGun", IE_Released, this, &AFirstProjectPawn::MGunOutput);
 	PlayerInputComponent->BindAxis("CameraRight", this, &AFirstProjectPawn::CameraRightInput);
 	PlayerInputComponent->BindAxis("CameraUp", this, &AFirstProjectPawn::CameraUpInput);
@@ -245,35 +261,43 @@ void AFirstProjectPawn::CameraUpInput(float Val)
 
 void AFirstProjectPawn::MGunInput()
 {
-	UWorld* const World = GetWorld();
-	// If it's ok to fire again
-	if(MGunAmmo > 0)
+	if (MGunAmmo > 0)
 	{
-		if (bCanFire == true)
-		{
-			MGunAmmo--;
-			bCanFire = false;
-			const FRotator FireRotation = GetActorRotation();
-			// Spawn projectile at an offset from this pawn
-			const FVector SpawnLocation = GetActorLocation() + FireRotation.RotateVector(GunOffset);
-			
-			if (World != NULL)
-			{
-				// spawn the projectile
-				AMGunBullet* bullet = World->SpawnActorDeferred<AMGunBullet>(AMGunBullet::StaticClass(), FTransform(FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone), SpawnLocation), GetOwner(), GetOwner()->GetInstigator());
-				bullet->SetVelocity(CurrentForwardSpeed);
-				UGameplayStatics::FinishSpawningActor(bullet, FTransform(FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone), SpawnLocation));
-			}
-			
-			fireAudioComponent->Activate();			
-		}
+		firing = true;
+		fireAudioComponent->Activate();
 	}
-	World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &AFirstProjectPawn::ShotTimerExpired, FireRate);
+	else
+	{
+		UGameplayStatics::PlaySound2D(World, ammoZeroAudioCue);
+	}
 }
 
 void AFirstProjectPawn::MGunOutput()
 {
+	firing = false;
 	fireAudioComponent->Deactivate();
+}
+
+void AFirstProjectPawn::MGunFire()
+{
+	MGunAmmo--;
+	bCanFire = false;
+	const FRotator FireRotation = GetActorRotation();
+	// Spawn projectile at an offset from this pawn
+	const FVector SpawnLocation = GetActorLocation() + FireRotation.RotateVector(GunOffset);
+
+	if (World != NULL)
+	{
+		// spawn the projectile
+		AMGunBullet* bullet = World->SpawnActorDeferred<AMGunBullet>(AMGunBullet::StaticClass(), FTransform(FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone), SpawnLocation), GetOwner(), GetOwner()->GetInstigator());
+		bullet->SetVelocity(CurrentForwardSpeed);
+		UGameplayStatics::FinishSpawningActor(bullet, FTransform(FireRotation + FRotator(((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone, ((float)rand()) / RAND_MAX * 2.0 * MGunCone - MGunCone), SpawnLocation));
+	}
+	else
+	{
+		printf("World == null!");
+	}
+	World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &AFirstProjectPawn::ShotTimerExpired, FireRate);
 }
 
 void AFirstProjectPawn::ShotTimerExpired()

@@ -53,12 +53,6 @@ public:
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 	float MGunCone;
 
-	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
-	class USoundBase* FireSound;
-
-	/* Fire a shot in the specified direction */
-	void FireShot(FVector FireDirection);
-
 	/* Handler for the fire timer expiry */
 	void ShotTimerExpired();
 
@@ -90,6 +84,8 @@ protected:
 
 	void MGunOutput();
 
+	void MGunFire();
+
 	void CameraRightInput(float Val);
 
 	void CameraUpInput(float Val);
@@ -108,6 +104,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Audio")
 	UAudioComponent* turbineAudioComponent;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Audio")
+	USoundCue* ammoZeroAudioCue;
 
 private:
 
@@ -152,6 +151,8 @@ private:
 	float CurrentCameraUp;
 
 	bool firing;
+
+	UWorld* const World = GetWorld();
 
 	/* Flag to control firing  */
 	uint32 bCanFire : 1;

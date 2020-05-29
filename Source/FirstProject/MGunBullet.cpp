@@ -32,10 +32,10 @@ AMGunBullet::AMGunBullet()
 	ProjectileMovement->MaxSpeed = 103000.f;
 	ProjectileMovement->bRotationFollowsVelocity = false;
 	ProjectileMovement->bShouldBounce = false;
-	ProjectileMovement->ProjectileGravityScale = 0.f; // Normal gravity
+	ProjectileMovement->ProjectileGravityScale = 1.f; // Normal gravity
 
-	// Die after 5 seconds if no collision
-	InitialLifeSpan = 5.0f;
+	// Die after 2 seconds if no collision
+	InitialLifeSpan = 2.0f;
 
 }
 
@@ -47,6 +47,6 @@ void AMGunBullet::SetVelocity(double vel)
 
 void AMGunBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-
-	//Destroy();
+	//Destroy object for now if it hits something
+	Destroy();
 }
