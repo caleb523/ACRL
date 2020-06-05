@@ -7,10 +7,12 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
+#include "Components/PoseableMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
@@ -31,10 +33,11 @@ AFirstProjectPawn::AFirstProjectPawn()
 	
 
 	// Create static mesh component
-	PlaneMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PlaneMesh0"));
+	PlaneMesh = CreateDefaultSubobject<UPoseableMeshComponent>(TEXT("PlaneMesh0"));
 	PlaneMesh->SetSkeletalMesh(ConstructorStatics.PlaneMesh.Get());	// Set static mesh
 	PlaneMesh->SetCollisionProfileName("Pawn");
 	RootComponent = PlaneMesh;
+	
 
 	// Create a spring arm component
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm0"));
@@ -55,6 +58,17 @@ AFirstProjectPawn::AFirstProjectPawn()
 	Camera->FieldOfView = 90.f;
 	Camera->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
 	Camera->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
+
+	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule0"));
+	Capsule->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+	Capsule->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	Capsule->SetRelativeScale3D(FVector(4.75f, 3.75f, 19.5f));
+	Capsule->SetSimulatePhysics(true);
+	Capsule->SetEnableGravity(false);
+	Capsule->SetNotifyRigidBodyCollision(true);
+
+	Capsule->BodyInstance.SetCollisionProfileName("BlockAllDynamic");
+	
 
 	// Set handling parameters
 	Acceleration = 15000.f;
@@ -78,6 +92,13 @@ AFirstProjectPawn::AFirstProjectPawn()
 	bCanFire = true;
 	MGunAmmo = 480;
 	firing = false;
+
+	RROffset = FRotator(90.f, 0.f, -90.f);
+	RLOffset = FRotator(90.f, 0.f, 90.f);
+	RRUp1 = 0.f;
+	RRUp2 = 0.f;
+	RLUp1 = 0.f;
+	RLUp2 = 0.f;
 
 	// Load our Sound Cue for the turbine sound we created in the editor... note your path may be different depending
 	// on where you store the asset on disk.
@@ -115,13 +136,10 @@ void AFirstProjectPawn::PostInitializeComponents()
 
 void AFirstProjectPawn::BeginPlay()
 {
+	Capsule->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
 	Super::BeginPlay();
+	Capsule->OnComponentHit.AddDynamic(this, &AFirstProjectPawn::OnCompHit);
 
-	// Note because the Cue Asset is set to loop the sound,
-	// once we start playing the sound, it will play 
-	// continiously...
-
-	// You can fade the sound in... 
 	float startTime = 9.f;
 	float volume = 1.0f;
 	float fadeTime = 1.0f;
@@ -129,6 +147,9 @@ void AFirstProjectPawn::BeginPlay()
 }
 void AFirstProjectPawn::Tick(float DeltaSeconds)
 {
+	Capsule->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	PlaneMesh->SetBoneRotationByName(FName("RR"), RROffset + FRotator(CurrentPitchSpeed / -5.f + CurrentRollSpeed / -10.f, 0.f, 0.f), EBoneSpaces::ComponentSpace);
+	PlaneMesh->SetBoneRotationByName(FName("RL"), RLOffset + FRotator(CurrentPitchSpeed / -5.f + CurrentRollSpeed / 10.f, 0.f, 0.f), EBoneSpaces::ComponentSpace);
 	float NewForwardSpeed = CurrentForwardSpeed + (GetWorld()->GetDeltaSeconds() * CurrentAcceleration);
 	// Clamp between MinSpeed and MaxSpeed
 	CurrentForwardSpeed = FMath::Clamp(NewForwardSpeed, MinSpeed, MaxSpeed);
@@ -182,6 +203,15 @@ void AFirstProjectPawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActo
 	CurrentHealth -= 10;
 }
 
+void AFirstProjectPawn::OnCompHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	//Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	// Deflect along the surface when we collide.
+	FRotator CurrentRotation = GetActorRotation();
+	SetActorRotation(FQuat::Slerp(CurrentRotation.Quaternion(), NormalImpulse.ToOrientationQuat(), 0.025f));
+	CurrentHealth -= 10;
+}
 
 void AFirstProjectPawn::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
@@ -221,6 +251,8 @@ void AFirstProjectPawn::MoveUpInput(float Val)
 
 	// Smoothly interpolate to target pitch speed
 	CurrentPitchSpeed = FMath::FInterpTo(CurrentPitchSpeed, TargetPitchSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
+	RRUp1 = Val * -7.5f;
+	RLUp1 = Val * -7.5f;
 }
 
 void AFirstProjectPawn::MoveRightInput(float Val)
@@ -228,12 +260,13 @@ void AFirstProjectPawn::MoveRightInput(float Val)
 	// Target yaw speed is based on input
 	float TargetRollSpeed = (2 * Val * TurnSpeed);
 
-
 	// Is there any left/right input?
 	const bool bIsTurning = FMath::Abs(Val) > 0.2f;
 
 	// Smoothly interpolate roll speed
 	CurrentRollSpeed = FMath::FInterpTo(CurrentRollSpeed, TargetRollSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
+	RRUp2 = Val * -2.5f;
+	RLUp2 = Val * 2.5f;
 }
 
 void AFirstProjectPawn::YawRightInput(float Val)
