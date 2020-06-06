@@ -22,7 +22,7 @@ AFirstProjectPawn::AFirstProjectPawn()
 	{
 		ConstructorHelpers::FObjectFinderOptional<USkeletalMesh> PlaneMesh;
 		FConstructorStatics()
-			: PlaneMesh(TEXT("/Game/Models/F22_Rigged/F22_Rigged_Scaled.F22_Rigged_Scaled"))
+			: PlaneMesh(TEXT("/Game/Models/F22_Rigged/F22_Rigged_Scaled"))
 		{
 		}
 	};
@@ -35,6 +35,8 @@ AFirstProjectPawn::AFirstProjectPawn()
 	PlaneMesh->SetSkeletalMesh(ConstructorStatics.PlaneMesh.Get());	// Set static mesh
 	PlaneMesh->SetCollisionProfileName("Pawn");
 	RootComponent = PlaneMesh;
+	static ConstructorHelpers::FClassFinder<UAnimInstance> animationBlueprintClass(TEXT("/Game/Blueprints/Animation/F22Animation2"));
+	PlaneMesh->SetAnimInstanceClass(animationBlueprintClass.Class);
 
 	// Create a spring arm component
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm0"));
@@ -146,7 +148,9 @@ void AFirstProjectPawn::Tick(float DeltaSeconds)
 	// Rotate plane
 	AddActorLocalRotation(DeltaRotation);
 
-	
+	RRUp = FMath::FInterpTo(RRUp, (RollIn + -1.f * PitchIn) * 25., GetWorld()->GetDeltaSeconds(), 2.f);
+	RLUp = FMath::FInterpTo(RLUp, (RollIn + PitchIn) * 25., GetWorld()->GetDeltaSeconds(), 2.f);
+
 	//Turbine noise pitch is determined by a combination of the relative speed and acceleration with acceleration having preference
 	float turbineRpm = (((CurrentAcceleration - MinAcceleration) / (MaxAcceleration - MinAcceleration)) * 0.75f + 0.25f * ((CurrentForwardSpeed - MinSpeed) / (MaxSpeed - MinSpeed))) * 1.25f + 0.75f;
 	turbineAudioComponent->SetPitchMultiplier(turbineRpm);
@@ -221,6 +225,7 @@ void AFirstProjectPawn::MoveUpInput(float Val)
 
 	// Smoothly interpolate to target pitch speed
 	CurrentPitchSpeed = FMath::FInterpTo(CurrentPitchSpeed, TargetPitchSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
+	PitchIn = Val;
 }
 
 void AFirstProjectPawn::MoveRightInput(float Val)
@@ -234,6 +239,7 @@ void AFirstProjectPawn::MoveRightInput(float Val)
 
 	// Smoothly interpolate roll speed
 	CurrentRollSpeed = FMath::FInterpTo(CurrentRollSpeed, TargetRollSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
+	RollIn = Val;
 }
 
 void AFirstProjectPawn::YawRightInput(float Val)

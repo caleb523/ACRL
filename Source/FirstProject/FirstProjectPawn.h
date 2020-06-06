@@ -56,6 +56,22 @@ public:
 	/* Handler for the fire timer expiry */
 	void ShotTimerExpired();
 
+	/*RR flap pitch*/
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+	float RRUp;
+
+	/*RR flap pitch*/
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+	float RLUp;
+
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+	float RollIn;
+
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+	float PitchIn;
+
+
+
 	/** Current forward speed */
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 	float CurrentForwardSpeed;
@@ -89,6 +105,17 @@ protected:
 	void CameraRightInput(float Val);
 
 	void CameraUpInput(float Val);
+
+	/** Current yaw speed */
+	float CurrentYawSpeed;
+
+	/** Current pitch speed */
+	UPROPERTY(BlueprintReadOnly, Category = "Gameplay")
+	float CurrentPitchSpeed;
+
+	/** Current roll speed */
+	UPROPERTY(BlueprintReadOnly, Category = "Gameplay")
+	float CurrentRollSpeed;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Audio")
 	USoundCue* fireAudioCue;
@@ -137,14 +164,7 @@ private:
 	UPROPERTY(Category = Plane, EditAnywhere)
 	float MinAcceleration;
 
-	/** Current yaw speed */
-	float CurrentYawSpeed;
-
-	/** Current pitch speed */
-	float CurrentPitchSpeed;
-
-	/** Current roll speed */
-	float CurrentRollSpeed;
+	
 
 	float CurrentCameraRight;
 
